@@ -64,6 +64,12 @@ def test_version_check(monkeypatch, qversion, version, op, expected):
     assert qtutils.version_check(version, op) == expected
 
 
+@pytest.mark.parametrize('version, ng', [
+    ('537.21', False), ('538.1', False), ('602.1', True)])
+def test_is_qtwebkit_ng(version, ng):
+    assert qtutils.is_qtwebkit_ng(version) == ng
+
+
 class TestCheckOverflow:
 
     """Test check_overflow."""
