@@ -65,7 +65,10 @@ def test_version_check(monkeypatch, qversion, version, op, expected):
 
 
 @pytest.mark.parametrize('version, ng', [
-    ('537.21', False), ('538.1', False), ('602.1', True)])
+    ('537.21', False),  # QtWebKit 5.1
+    ('538.1', False),   # Qt 5.8
+    ('602.1', True)     # QtWebKit-NG TP5
+])
 def test_is_qtwebkit_ng(version, ng):
     assert qtutils.is_qtwebkit_ng(version) == ng
 
