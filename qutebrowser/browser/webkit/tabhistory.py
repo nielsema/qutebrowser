@@ -77,7 +77,6 @@ def _serialize_old(items, current_idx, stream):
 
     for i, item in enumerate(items):
         _serialize_item_old(i, item, stream)
-        user_data.append(item.user_data)
 
 
 def _serialize_item_old(i, item, stream):
