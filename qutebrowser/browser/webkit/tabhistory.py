@@ -48,13 +48,13 @@ def _serialize_ng(items, current_idx, stream):
     #               'urlString': 'about:blank'}]}
     data = {'currentItemIndex': current_idx, 'history': []}
     for i, item in enumerate(items):
-        data['history'].append(_serialize_item_ng(i, item))
+        data['history'].append(_serialize_item_ng(item))
 
     stream.writeInt(3)  # history stream version
     stream.writeQVariantMap(data)
 
 
-def _serialize_item_ng(i, item):
+def _serialize_item_ng(item):
     data = {
         'originalURLString': item.original_url.toString(QUrl.FullyEncoded),
         'scrollPosition': {'x': 0, 'y': 0},
