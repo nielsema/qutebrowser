@@ -37,7 +37,7 @@ from qutebrowser.utils import usertypes, log, qtutils, message, objreg, utils
 
 
 Target = usertypes.enum('Target', ['normal', 'current', 'tab', 'tab_fg',
-                                   'tab_bg', 'window', 'yank', 'yank_primary',
+                                   'tab_bg', 'window', 'yank', 'yank_primary', 'yank_text', 'yank_text_primary',
                                    'run', 'fill', 'hover', 'download',
                                    'userscript', 'spawn'])
 
@@ -246,6 +246,25 @@ class HintActions:
             urlstr)
         message.info(msg)
 
+    def yank_text(self, text, context):
+        """Yank an element to the clipboard or primary selection.
+
+        Args:
+            text: The text to open as a QUrl.
+            context: The HintContext to use.
+        """
+        sel = (context.target == Target.yank_text_primary and
+               utils.supports_selection())
+
+        inner = text.inner_xml()
+
+        utils.set_clipboard(inner, selection=sel)
+
+        msg = "Yanked text to {}: {}".format(
+            "primary selection" if sel else "clipboard",
+            inner)
+        message.info(msg)
+
     def run_cmd(self, url, context):
         """Run the command based on a hint URL.
 
@@ -316,7 +335,7 @@ class HintActions:
         try:
             userscripts.run_async(context.tab, cmd, *args, win_id=self._win_id,
                                   env=env)
-        except userscripts.Error as e:
+        except userscripts.UnsupportedError as e:
             raise HintingError(str(e))
 
     def spawn(self, url, context):
@@ -357,6 +376,8 @@ class HintManager(QObject):
         Target.window: "Follow hint in new window",
         Target.yank: "Yank hint to clipboard",
         Target.yank_primary: "Yank hint to primary selection",
+        Target.yank_text: "Yank hint text to clipboard",
+        Target.yank_text_primary: "Yank hint text to primary selection",
         Target.run: "Run a command on a hint",
         Target.fill: "Set hint in commandline",
         Target.hover: "Hover over a hint",
@@ -627,6 +648,7 @@ class HintManager(QObject):
                 - `links`: Only links.
                 - `images`: Only images.
                 - `inputs`: Only input fields.
+                - `header`: HTML headers (h1 - h6)
 
             target: What to do with the selected element.
 
@@ -846,8 +868,11 @@ class HintManager(QObject):
             Target.tab: self._actions.click,
             Target.tab_fg: self._actions.click,
             Target.tab_bg: self._actions.click,
+            Target.yank_text: self._actions.yank_text,
+            Target.yank_text_primary: self._actions.yank_text,
             Target.window: self._actions.click,
             Target.hover: self._actions.click,
+            
             # _download needs a QWebElement to get the frame.
             Target.download: self._actions.download,
             Target.userscript: self._actions.call_userscript,
