@@ -29,6 +29,8 @@ Module attributes:
 
 import collections.abc
 
+from html.parser import HTMLParser
+
 from PyQt5.QtCore import QUrl, Qt, QEvent, QTimer
 from PyQt5.QtGui import QMouseEvent
 
@@ -38,7 +40,7 @@ from qutebrowser.utils import log, usertypes, utils, qtutils, objreg
 
 
 Group = usertypes.enum('Group', ['all', 'links', 'images', 'url', 'prevnext',
-                                 'inputs'])
+                                 'inputs', 'headers'])
 
 
 SELECTORS = {
@@ -53,6 +55,7 @@ SELECTORS = {
                    'input[type=tel], input[type=number], '
                    'input[type=password], input[type=search], '
                    'input:not([type]), textarea'),
+    Group.headers: ('h1, h2, h3, h4, h5, h6'),
 }
 
 
@@ -64,6 +67,11 @@ FILTERS = {
     Group.links: filter_links,
     Group.prevnext: filter_links,
 }
+
+class HTMLExtractor(HTMLParser):
+    def handle_data(self, data):
+        print("Encountered some data  :", data)
+        self.text = data
 
 
 class Error(Exception):
@@ -138,6 +146,12 @@ class AbstractWebElement(collections.abc.MutableMapping):
     def outer_xml(self):
         """Get the full HTML representation of this element."""
         raise NotImplementedError
+
+    def inner_xml(self):
+        """Get the inner HTML representation of this element."""
+        extractor = HTMLExtractor()
+        inner_html = extractor.feed(self.outer_xml())
+        return extractor.text
 
     def value(self):
         """Get the value attribute for this element, or None."""
@@ -397,9 +411,6 @@ class AbstractWebElement(collections.abc.MutableMapping):
                           to simulate.
             force_event: Force generating a fake mouse event.
         """
-        log.webelem.debug("Clicking {!r} with click_target {}, force_event {}"
-                          .format(self, click_target, force_event))
-
         if force_event:
             self._click_fake_event(click_target)
             return
